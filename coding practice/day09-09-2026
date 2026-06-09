@@ -1,0 +1,82 @@
+## Ansible
+ 
+---
+- name: Deploy template for pathnex
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: copy templat files
+      template:
+        src: pathnex.config.j2
+        dest: /etc/pathnex.conf
+
+## Terraform
+
+resource "aws_internet_gateway" "pathnexIGW" {
+  vpc_id = aws_vpc.pathnexvpc.id
+
+  tags = {
+    Name = "Pathnex-IGW"
+}
+
+## kubernetes
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pathnex-config
+data:
+  APP_MODE: "production"
+  WELCOME_MSG: "Hello Pathnex"
+
+## shell scripting
+
+#!/bin/bash
+
+LOAD=$(uptime | awk '(print $10)')
+echo "current cpu Load: $Load"
+
+### jenkins 
+
+pipeline {
+    agent any
+    environment {
+        INSTITUTE_NAME = "Pathnex"
+    }
+    stages {
+        stage('checkout') {
+            steps {
+                git url: 'https://github.com/Pathnex/sample-java-app.git'
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        stage('Archive') {
+            steps {
+                archiveArtifacts artifacts: 'target/*.jat', fingerprint: true
+            }
+        }
+    }
+}
+
+## gitlab 
+
+stages:
+  - build
+
+build:
+  stage: build
+  image: maven:3.8.1-jdk-17
+  script:
+    - git clone https://github.com/Pathnex/sample-java-app.git
+    - cd sample-java-app
+    - mvn clean package
+  artifacts:
+    paths:
+      - target/*.jar
+    expire_in: 1 weeek
+
