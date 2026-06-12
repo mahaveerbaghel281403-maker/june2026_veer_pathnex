@@ -1,0 +1,114 @@
+#### ansible
+
+---
+- name: Create write content to file
+  hosts: all
+  become: yes
+ 
+  tasks:
+    - name: write content to file
+      copy:
+        dest: /etc/pathnex.config
+        content: |
+          welcome to pathnex devops training
+          today is day 12
+
+### terraform
+
+resource "aws_db_instance" "PathnexRDS" {
+  allocated_storage      = 20
+  engine                 = "mysql"
+  instance_class         = "db.t3.micro"
+  name                   = "pathnexdb"
+  username               = "admin"
+  password               = "password123"
+  skip_final_snapshot    = true
+}
+
+resource "aws_db_instance" "pathnexRDS" {
+  allocated_storage  = 20
+  engine             = "mysql"
+  instance_class     = "db.t3.micro"
+  name               = "pathnexdb"
+  username           = "admin"
+  password           = "password123"
+  skip_final_snapshot = true
+}
+
+#### kubernetes
+
+apiVersion: app/v1
+kind: Deployment
+metadata:
+  name: pathnex-rolling
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLables:
+      app: roll
+  template:
+    metadata:
+      labels:
+        app: roll
+    spec:
+      containers:
+        - name: web
+          image: nginx
+
+### shell scripting
+
+
+#!/bin/bash
+
+SOURCE="/var/log"
+DEST="/backup/pathnex-$(date +%F).tar.gz"
+
+tar -czf $DEST $SOURCE
+echo "Backup created at: $DEST"
+
+### jenkins
+
+pipeline {
+    agent any 
+    environment {
+        INSTITUTE_NAME = "pathnex"
+    }
+    stages {
+         stage('checkout') {
+             steps {
+                 checkout scm
+             }
+         }
+         stage('Build') {
+             steps {
+                 sh 'mvn clean compile'
+             }
+         }
+    }
+}
+
+### gitlab
+
+stages:
+  - build
+
+build-main:
+  stage: build
+  image: maven:3.8.1-jdk-17
+  script:
+    - mvn clean compile
+  only:
+    - main
+build-dev:
+  stage: build
+  image: maven:3.8.1-jdk-17
+  script:
+    - mvn clean compile
+  only:
+    - dev
+
