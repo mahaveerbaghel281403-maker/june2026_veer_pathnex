@@ -1,0 +1,130 @@
+---
+- name: Install maria
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Install mariadb
+      yum: 
+        name: mariadb
+        state: present
+    - name: start
+        name: mariadb
+        state: started
+        enabled: yes
+
+#### terraform
+
+resource "aws_instance" "myserver" {
+   ami - "ami-0nasjkbfhfhfhalhfl"
+   instance_type = "t3.micro"
+
+   tags = {
+     Name = "My-Server"
+   }
+}
+
+output "PublicIp" {
+  value = aws_instance.myserver.public_ip
+}
+
+
+##### kubernetes
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pathnex-sidecar
+spec:
+  containers:
+    - name: main
+      image: nginx
+    - name: sidecar
+      image: busybox
+      command: ["sh", "-c", "echo Sidecar running; sleep 3600"]
+
+### shell scripting
+
+#!/bin/bash
+
+greet() {
+  echo "Welcome to Veer devops Training"
+}
+greet
+
+
+### jenkins
+pipeline {
+    agent any
+    environment {
+        INSTITUTE_NAME = "Pathnex"
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git url: 'https://github.com/Pathnex/sample-java-app.git'
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+    }
+    post {
+        success {
+            mail to: 'team@pathnex.com',
+                 subject: "SUCCESS: Build #${env.BUILD_NUMBER}",
+                 body: "Build completed successfully for $INSTITUTE_NAME"
+        }
+        failure {
+            mail to: 'team@pathnex.com',
+                 subject: "FAILURE: Build #${env.BUILD_NUMBER}",
+                 body: "Build failed for $INSTITUTE_NAME"
+        }
+    }
+}
+pipeline {
+    agent any
+    environment {
+        SCHOOL_name = "Pathnex"
+    }
+    stages {
+        stage('checkout') {
+            steps {
+                git url: 'htttps://github.com/Pathnex/sample-java-app.git'
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+    }
+    post {
+        success {
+            mail to: 'team@pathnex.com'
+                 subject: "FAILURE: Build #${env.BUILD_NUMBER}"
+                 body: "Build completed successfully for $SCHOOL_NAME"
+        }
+        failure {
+            mail to: 'team@pathnex.com' ,
+                 subject: "FAILURE: BUILD #${env.BUILD_NUMBER}",
+                 body: "BUILD failed for $SCHOOL_NAME"
+        }
+    }
+}
+
+### gitlab
+ 
+stages:
+  - build
+build:
+  stage: build
+  image: maven:3.8.1-jdk-17
+  script:
+    - git clone https://github.com/Pathnex/sample-java-app.git
+    - cd sample-java-app
+    - mvn clean package
+  after_script:
+    - echo "Sending notification email to team@pathnex.com"
