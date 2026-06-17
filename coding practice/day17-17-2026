@@ -1,0 +1,95 @@
+### ansible
+
+---
+- name: Create multiple user
+  hosts: all
+  become: yes
+
+  vars:
+    users:
+      - dev1
+      - dev2
+      - dev3
+
+  tasks:
+    - name: create user
+      user:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ user }}"
+
+
+## terraform
+
+resource "aws_alb" "veerALB" {
+    name = "veerlb"
+    load_balancer_type = "application"
+    subnets = [aws_subnet.PathnexSubnet.id]
+
+    tags = {
+      Name = "veer-alb"
+    }
+}
+
+### kubernetes
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dev
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  namespace: dev
+spec:
+  replicas:
+  selector: 
+    matchLabels:
+      app: nginx
+  template:
+     metadata:
+       labels:
+         app: nginx
+     spec:
+       containers:
+         - name: app
+           image: nginx:latest
+
+### shell scripting
+#!/bin/bash
+ ps aux --sort=-%mem | head -n 6
+
+## jenkins
+
+pipeline {
+    agent any 
+    parameters {
+        choice(name: 'ENVIRONMENT', choices: ['dev', 'staging', 'prod'], description: 'Deployment Environment')
+    }
+    environment {
+        INSTITUTE_NAME: "pathnex"
+    }
+    stages {
+        stage('Deploy') {
+            steps {
+                sh 'echo "Deploying $INSTITUTE_NAME application to $EVIRONMENT"'
+            }
+        }
+    }
+}
+
+## gitlab
+  
+stages:
+  - deploy
+variables:
+  INSTITUTE_NAME: "Pathnex"
+  ENVIRONMENT: "staging"
+deploy:
+   stage: deploy
+   image: alpine:latest
+   script:
+     - echo "deploying $INSTITUTE_NAME application to $ENVIRONMENT"
