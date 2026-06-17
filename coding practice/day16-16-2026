@@ -1,0 +1,109 @@
+### ansible
+roles/
+     pathnex/
+        tasks/
+          main.yml
+        handlers/
+           main.yml
+        templates/
+           vars/
+        main.yml
+
+####terraform
+
+resource "aws_dynamodb_table" "pathnexTable" {
+  name = "PathnexTriningTable"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key = "ID"
+
+  attribute {
+    name = "ID"
+    type = "S"
+  }
+  
+  tags = {
+    Name = "veer-ddb"
+  }
+}
+
+### kubernetes
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: veer-db
+spec:
+  serviceName: "veer"
+  replicas: 2
+  selector:
+    matchLabels:
+      app: veer-db
+  template:
+    metadata:
+      labels:
+        app: veer-db
+    spec:
+      containers:
+        - name: db
+          image: mysql
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: "Pathnex123"
+
+
+## shell scripting
+
+#!/bin/bash
+
+
+SERVICE="sshd"
+
+if systemctl is-active --quit $SERVICE; then
+   echo "$SERVICE is running"
+else
+  echo "$SERVICE is not running"
+fi
+
+### jenkINS
+
+pipeline {
+    agent any
+    environment {
+        SCHOOL_NAME ="pathnex"
+    }
+    stages {
+        stage('BUILD') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        stage('Promote') {
+            steps {
+                input meassage: "Promote artifact to staging?"
+                sh 'echo "Promoting artifacts for $SCHOOL_NAME"'
+            }
+        }
+    }
+}
+
+### gitlab
+
+stages:
+  - build
+  - promote
+build:
+  stage: build
+  image: maven:3.8.1-jdk-17
+  script:
+    - mvn clean package
+  artifacts:
+    paths:
+      - target/*.jar
+    expire_in: 1 week
+promote:
+  stage: promote
+  image: alpine:latest
+  script:
+    - echo "promoting artifacts for pathnex"
+  when:manual
+     
