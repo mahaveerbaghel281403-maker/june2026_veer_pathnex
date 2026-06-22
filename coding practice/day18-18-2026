@@ -1,0 +1,105 @@
+## ansible
+--- 
+- name: show system fact
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Print os info
+      debug:
+        var: ansible_facts['os_family']
+
+    - name: Print Ip address
+      debug: 
+        var: ansible_facts['default_ip4']['address']
+
+## terraform
+
+
+
+### variable.tf
+
+variable "instance_type" {
+  default = "c6a.12xlarge"
+}
+
+### main.tf
+
+resource "aws_instance" "PathnexServer" {
+  ami = "ami-0fhfhalbgghrh"
+  instance_type = var.instance_type
+}
+
+### output
+
+output "Pathnex_ip {
+  value = aws_instance.PathnexServer.public_ip
+}
+
+
+##### kubernetes
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pathnex-affinity
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoreDuringExecution:
+        nodesSeletorTerms:
+          - matchExpressions:
+              - key: disktype
+                operator: In
+                values:
+                  - ssd
+  containers:
+    - name:web
+      image: nginx
+
+## shell scripting
+
+#!/bin/bash
+
+tar -czf /backup/pathnex-logs-$(date +%f).tar.gz /var/log/
+echo "logs archived."
+
+### jenkins
+
+pipeline {
+    agent any
+    environment {
+        INSTITUTE_NAME = "Pathnex"
+    }
+    stages {
+        stage('Deploy') {
+            steps {
+                script {
+                    try {
+                        sh 'echo "Deploying $INSTITUTE_NAME application..."'
+                        sh 'exit 1' // simulate failure
+                    } catch (Exception e) {
+                        echo "Deployment failed. Rolling back $INSTITUTE_NAME application..."
+                    }
+                }
+            }
+        }
+    }
+}
+
+### gitlab
+
+stages:
+  - deploy
+
+variables:
+  INSTITUTE_NAME: "Pathnex"
+
+deploy:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - echo "Deploying $INSTITUTE_NAME application..."
+    - exit 1
+  after_script:
+    - echo "Deployment failed. Rolling back $INSTITUTE_NAME application..."

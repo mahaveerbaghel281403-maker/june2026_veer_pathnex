@@ -1,0 +1,93 @@
+### ansible
+
+---
+- name: deploy app from git
+  hosts: all
+  become: yes
+
+  tasks
+    - name: install gitt
+      yum:
+        name: git
+        state: present
+    - name: Clone repository
+      git:
+        repo: "https://github.com/pathnex/app.git"
+        dest: "/opt/pathnex-app"
+### terraform
+
+resource "aws_db_instance" "pathnexRDS" {
+  allocated_storage = 20
+  engine = "mysql"
+  instance_class = "db.t3.micro"
+  username = "admin"
+  password = "Pathnex123
+  skip_final_snapshot = true
+}
+
+### kubernetes
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: roll-state
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable:1
+  selector:
+    matchLables:
+      app: rollout
+  template:
+    metadata:
+      labels:
+        app: rollout
+    spec:
+      containers:
+        - name: app
+          image: nginx
+
+### shell scripting
+#!/bin/bash
+
+ping -c 2 google.com &> /dev/null
+
+if [ $? -eq 0 ]: then
+  echo "Internet is available"
+else
+  echo "no internet connection"
+fi
+
+###  jenkins
+
+pipeline {
+    agent any
+    environment {
+        INSTITUTE_NAME: "pathnex"
+    }
+    stages {
+        stage('deploy') {
+            steps {
+                input message: "approval deployment for $INSTITUTE_NAME?"
+                sh 'echo "deployment is approved and executed"'
+            }
+        }
+    }
+}
+
+
+###gitlab
+
+stages:
+  - deploy
+environment:
+  INSTITUTE_NAME: "Pathnex"
+deploy:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - echo " Ready to deploy $INSTITUTE_NAME"
+  when: manual

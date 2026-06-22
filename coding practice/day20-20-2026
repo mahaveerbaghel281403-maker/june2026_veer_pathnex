@@ -1,0 +1,90 @@
+### ansible
+
+---
+- name: install apache
+  hosts: all
+  become:
+ 
+  tasks:
+    - name: install apache
+      yum:
+        name: httpd
+        state: present
+
+    - name: enable service
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+
+
+### terraform
+
+resource "aws_instance" "veer" {
+  ami = "ami-0nfbfwebfwj"
+  instance_type = "c7i-flex.large"
+
+  tags = {
+    Name = "veer-server"
+  }
+}
+
+###kubernetes
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: broken
+  template:
+    metadata:
+      labels:
+        app: broken
+    spec:
+      containers:
+        - name: nginx
+          image: nginx
+          ports:
+            - containerPort: 80
+
+### jenkins
+ 
+
+pipeline {
+    agent any
+    environment {
+        INSTITUTE_NAME = "Pathnex"
+    }
+    stages {
+        stage('checkout') {
+            steps {
+                git url: 'http://github.com/pathnex/sample-java-app.git'
+            }
+        }
+        stage('use secret') {
+            steps {
+                withCredentials([string(credentialsId: 'PATHNEX_API_KEY', variable: 'API_KEY')]) {
+                    sh 'echo "Using secret $API_KEY for $INSTITUTE_NAME"'
+                }
+            }
+        }
+    }
+}
+
+##### gitlab
+
+stages:
+  - build
+variables:
+  INSTITUTE_NAME: "Pathnex"
+  API_KEY: "PLACEHOLDER_SECRET"
+
+build:
+  stage: build
+  image: alpine:latest
+  script:
+    - echo "Using secret $API_KEY for $INSTITUTE_NAME"
