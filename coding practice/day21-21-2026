@@ -1,0 +1,147 @@
+### ansible
+
+--- 
+- name: install nginx
+  hosts: all
+  become: yes
+ 
+  tasks:
+    - name: install nginx
+      yum:
+        name: nginx
+        state: present
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+### terraform
+
+resource "aws_instance" "veer" {
+  ami = "ami-0bhgqfHGFLEH"
+  instance_type = "c7i-flex.large"
+
+  tags = {
+    Name = "PathnexStudent"
+  }
+
+### kubernetes
+
+apiVersion: apps/v1
+kind: Deplooyment
+metadata:
+  name: nginx-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLables:
+      app: nginx
+  template:
+    metadata:
+      lables:
+        app: nginx
+    spec:
+      - name: nginx
+        image: nginx:latest
+        ports:
+          - containerPort: 80
+
+### shell scripting
+
+#!/bin/bash
+
+date
+echo "Current Date and Time:"
+
+
+uptime
+echo "System Uptime:"
+
+df -h
+echo "Disk Usage:"
+
+
+
+#### jenkins
+
+pipeline {
+    agent any
+    environment {
+        INSTITUTE_NAME = "Pathnex"
+    }
+    stages {
+        stage('Deploy to Dev') {
+            steps {
+                sh 'echo "Deploying $INSTITUTE_NAME to Dev environment"'
+            }
+        }
+        stage('Deploy to Staging') {
+            steps {
+                input message: "Approve Staging Deployment?"
+                sh 'echo "Deploying $INSTITUTE_NAME to Staging environment"'
+            }
+        }
+        stage('Deploy to Prod') {
+            steps {
+                input message: "Approve Prod Deployment?"
+                sh 'echo "Deploying $INSTITUTE_NAME to Prod environment"'
+            }
+        }
+    }
+}
+
+pipeline {
+    agent any 
+    environment {
+        INSTITUTE_NAME = "Pathnex"
+    }
+    stages {
+        stage('deploy to dev') {
+            steps {
+                sh 'echo "Deploying $INSTITUTE_NAME to Dev environment"'
+            }
+        }
+        stage('deploying to stage') {
+            steps {
+                input message: "Approve staging Deployment?"
+                sh 'echo "Deploying $INSTITUTE_NAME TO stage environment"'
+            }
+        }
+        stage('Deploy to prod') {
+            steps {
+                input message: "Approve Prod Deployment?"
+                sh 'echo "Deploying $INSTITUTE_NAME to Dev environment"'
+            }
+        }
+    }
+}
+
+### gitlab
+
+stages:
+  - deploy
+
+environment:
+  INSTITUTE_NAME: "pathnex"
+
+deploy-dev:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - echo "Deploying $INSTITUTE_NAME to Dev environment"
+
+deploy-staging:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - echo "Deploying $INSTITUTE_NAME to Staging environment"
+  when: manual
+
+deploy-prod:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - echo "Deploying $INSTITUTE_NAME to Prod environment"
+  when: manual
+
+
