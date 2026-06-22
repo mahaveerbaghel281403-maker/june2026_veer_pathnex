@@ -1,0 +1,117 @@
+### ansible
+---
+- name: configure nginx for pathnex
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: copy nginx config
+      copy:
+        dest: /etc/nginx/nginx.conf
+        content: |
+          user nginx;
+          worker_processes auto;
+      notify: Restart nginx
+  handlers:
+    - name: REstart nginx
+      service: 
+        name: nginx
+        state: restarted
+### terraform
+
+resource "aws_security_group" "mg" {
+   vpc_id = aws_vpc.veerwkn
+   name = "veer-server"
+   
+   ingress {
+     from_port = 22
+     to_port = 22
+     protocol = "TCP"
+     cidr_blocks = ["0.0.0.0/0"]
+   }
+   ingress {
+     from_port = 22
+     to_port = 22
+     protocol = "TCP"
+     cidr_blocks = ["0.0.0.0/0"]
+   }
+   tags = {
+     Name = "veer-sg"
+   }
+}
+
+#### kubernetes
+
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: pathnex-daemon
+spec:
+  selector:
+    matchLables:
+      app: veer
+  template:
+    metadata:
+      lables:
+        app: veer
+    spec:
+      containers:
+        - name: monitor
+          image: busybox
+          command: ["sh", "-c", "while true; do echo pathnex Node monitor; sleep 20; done"]
+
+
+### shell scripting
+
+#!/bin/bash
+
+USAGE=$(df -h / | tail -1 | awk '{print $5})
+echo "disk usage: $USAGE"
+
+
+### jenkins
+pipeline {
+    agent any
+    environment {
+        INSTITUTE_NAME = "Pathnex"
+        TEAM = "DevOps"
+        ENV = "prod"
+    }
+    triggers {
+        pollSCM('H/15 * * * *')
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git url: 'https://github.com/Pathnex/sample-java-app.git', branch: 'main'
+            }
+        }
+        stage('Build') {
+            when {
+                buildingTag()
+            }
+            steps {
+                sh 'echo "Building $INSTITUTE_NAME app for $TEAM team in $ENV environment"'
+            }
+        }
+    }
+}
+
+### gitlab
+
+stages:
+  - build
+
+variables:
+  INSTITUTE_NAME: "Pathnex"
+  TEAM: "DevOps"
+  ENV: "prod"
+
+build:
+  stage: build
+  image: maven:3.8.1-jdk-17
+  script:
+    - echo "Building $INSTITUTE_NAME app for $TEAM team in $ENV environment"
+  only:
+    - tags
+
