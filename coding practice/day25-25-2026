@@ -1,0 +1,111 @@
+###ansible
+
+--- 
+- name: update ssh config for veer
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: disable rootlogin
+      lineinfile:
+        path: /etc/ssh/sshs_cofig
+        regexp: "^PermitRootLogin"
+        line: "PermitRootLogin no"
+
+### terraform
+resource "aws_key_pair" "my_key" {
+  key_name = "veer-key"
+  public_key = file("~/.ssh/id_rsa.pub")
+}
+
+output key_name {
+  value = aws_key_pair.my_key.key_name
+}
+
+### kubernetes
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: veer-sidecar
+spec:
+  containers:
+    - name: app
+      image: nginx
+    - name: log-writer
+      image: busybox
+      command: ["sh", "-c", "while true; do echo log entry; sleep 5; done"]
+
+### shell scripting
+
+#!/bin/bash
+DIR="/var/log"
+COUNT=$(ls $DIR | WC -l)
+echo "total files in $DIR: $COUNT
+
+
+### jenkins
+
+pipeline {
+    agent any
+    environment {
+        INSTITUTE_NAME = "VEER"
+        TEAM = "devops"
+        ENV = "staging"
+    }
+    stages {
+        stage('checkout') {
+            steps {
+                git url: 'https://github.com/pathnex/sample-java-app.git'
+            }
+        }
+        stage('Build') {
+            steps {
+                sh '''
+                if [ -d ".m2" ]; then
+                    echo "Using chached dependencies for $INSTITUTE_NAME in $ENV by $TEAM"
+                else 
+                    mvn clean compile
+                fi
+                '''
+            }
+        }
+    }
+}
+
+#### gitlab
+
+stages:
+  - build
+
+variables:
+  INSTITUTE_NAME: "Pathnex"
+  TEAM: "DevOps"
+  ENV: "staging"
+
+build:
+  stage: build
+  image: maven:3.8.1-jdk-17
+  cache:
+    key: "${ENV}-maven-cache"
+    paths:
+      - .m2/repository
+  script:
+    - mvn clean compile
+    - echo "Cached dependencies for $INSTITUTE_NAME in $ENV by $TEAM"
+stages:
+  - build
+variables:
+  INSTITUTE_NAME: "VEER"
+  TEAM: "devops"
+  ENV: "staging"
+build:
+  stage: build
+  image: maven:3.8.1-jdk-17
+  cache:
+    key: "${ENV}-maven-cache"
+    paths:
+      - .m2/repository
+  script:
+    - mvn clean compile
+    - echo "Cached dependencies for $INSTITUTE_NAME IN $ENV by $TEAM
